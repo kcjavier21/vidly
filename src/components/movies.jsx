@@ -1,73 +1,81 @@
 import React, { Component } from 'react';
-import { getMovies } from '../services/fakeMovieService';
 import '../index.css';
-import Like from './common/like'
+import Pagination from './common/pagination';
+import { paginate } from '../utils/paginate';
+import ListGroup from './common/listGroup';
+import _ from 'lodash';
+import MoviesTable from './moviesTable'
+
 
 export default class movies extends Component {
-    state = {
-        movies: getMovies()
-    };
-
-    handleDelete = movie => {
-        const movies = this.state.movies.filter(m => m._id !== movie._id);
-        this.setState({ movies });
-    };
-
-    handleLike = movie => {
-        const movies = [...this.state.movies];
-        const index = movies.indexOf(movie);
-        movies[index] = {...movies[index]};
-        movies[index].liked = !movies[index].liked;
-
-        this.setState({ movies });
-        
-       console.log(movie);
-    }
-
     render() {
-        const { movies } = this.state;
-        let message = ''
+        const { movies: allMovies, 
+            onLike, onDelete, 
+            onPageChange, selectedGenre, 
+            onGenreSelect, itemsCount, 
+            pageSize, currentPage, 
+            onSort, sortColumn } = this.props;
 
-        movies.length === 0 ? message += 'No movies :(' : message += `Showing ${movies.length} movies`;
+        let message = '';
+
+        const filtered = selectedGenre && selectedGenre._id 
+            ? allMovies.filter(m => m.genre._id === selectedGenre._id) 
+            : allMovies;
+
+        const sorted = _.orderBy(filtered, [sortColumn.path], [sortColumn.order]);
+
+        allMovies.length === 0 ? message += 'No movies :(' : message += `Showing ${filtered.length} movies`;
+
+        const movies = paginate(sorted, currentPage, pageSize);
+
+        // console.log('MOVIES: ' + movies[0].title);
+        // console.log('CURRENT PAGE: ' + currentPage);
+        // console.log('PAGE SIZE: ' + pageSize);
         
         return (
-            <React.Fragment>
-                <h2 style={{ padding: 10 }}>{message}</h2>
-                <table className="table">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Genre</th>
-                            <th>Stock</th>
-                            <th>Rate</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        { this.state.movies.map(movie => (
-                            <tr key={movie._id}>
-                                <td>{ movie.title }</td>
-                                <td>{ movie.genre.name }</td>
-                                <td>{ movie.numberInStock }</td>
-                                <td>{ movie.dailyRentalRate }</td>
-                                <td>
-                                    <Like liked={movie.liked} onLike={() => this.handleLike(movie)}/>
-                                </td>
-                                <td>
-                                    <button 
-                                        onClick={() => this.handleDelete(movie)}
-                                        className="btn btn-danger btn-sm"
-                                    >
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>  
-                        ))}
-                        
-                    </tbody>
-                    </table>
+            <div className="row" 
+                style={{
+                    width: "75%",
+                    margin: "auto",
+                    cursor: "pointer"
+                    }}>
+                <div className="col-3">
+                    <ListGroup 
+                        genres={this.props.genres}
+                        // textProperty={this.props.textProperty}
+                        // valueProperty={this.props.valueProperty}
+                        textProperty="name"
+                        valueProperty="_id"
+                        onGenreSelect={onGenreSelect}
+                        selectedGenre={selectedGenre}
+                    />
+                </div>
+                <div className="col">
+                    <h4>{message}</h4>
+                      
+                <MoviesTable 
+                    movies={movies}
+                    onLike={onLike}
+                    onDelete={onDelete}
+                    onSort={onSort}
+                    sortColumn={sortColumn}
+                />
 
-            </React.Fragment>
+                <Pagination 
+                        onPageChange={onPageChange}
+                        itemsCount={filtered.length}
+                        pageSize={pageSize}
+                        currentPage={currentPage}
+                 />               
+                </div>
+
+                
+                {/*<Genres />*/}
+                
+                
+                
+                    
+            </div>
 
         )
     }
