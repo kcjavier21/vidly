@@ -4,7 +4,7 @@ import Movies from './components/movies';
 import { getGenres } from './services/fakeGenreService';
 import { getMovies } from './services/fakeMovieService';
 //import Genres from './components/common/genres';
-import _ from 'lodash';
+
 
 
 export default class App extends Component {
